@@ -173,7 +173,7 @@ def make_summary_in_single_review(location, big_cat, small_cat, product_id):
 def main():
     filenames = os.listdir(data_loc)
     #cat_choice = random.choice(filenames)
-    cat_choice = "gjs"
+    cat_choice = "mealkit"
     fileloc = data_loc + cat_choice + "/"
     big_cat = cat_choice
 
