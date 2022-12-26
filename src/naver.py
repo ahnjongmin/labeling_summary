@@ -82,8 +82,8 @@ def extract_taste_area_in_review(row):
     split_area_text = [i.replace("(맛)", "") for i in split_area_text]
     split_area_text = [i for i in split_area_text if i != ""]
 
-    print(split_text)
-    print(split_area_text)
+    #print(split_text)
+    #print(split_area_text)
 
     aalist = []
     ret_str = ""
