@@ -143,7 +143,7 @@ def make_summary_in_single_review(location, big_cat, small_cat, product_id):
     a += extract_amount_of_reviews_for_save(df_bad, BAD_NUM)
 
     reviews = []
-    print("Selected Product: {}".format(df.loc[0]['product_name']))
+    
     print("______당신이 선택한 리뷰 10개입니다______")
     for idx, i in enumerate(a):
         print(idx, ",", i['review_text'])
