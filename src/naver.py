@@ -119,7 +119,7 @@ def extract_amount_of_reviews_for_save(df, num):
                 a = input()
                 if a != "":
                     num_to_waste = a.strip().split(" ")
-                    num_to_waste = [int(i) for i in num_to_waste]
+                    num_to_waste = list(set([int(i) for i in num_to_waste]))
                 else:
                     num_to_waste = []
                 
