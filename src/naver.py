@@ -100,7 +100,7 @@ def extract_taste_area_in_review(row):
 
     return row
 
-def extract_amount_of_reviews_for_save(df, num):
+def extract_amount_of_reviews_for_save(df, num, product_id):
     
     reviews_dict_list = []
     order = 0
@@ -117,7 +117,12 @@ def extract_amount_of_reviews_for_save(df, num):
                     print(idx, row.review_text)
                 
                 a = input()
-                if a != "":
+                if a == "!!!":
+                    with open(now_loc + "/trash.txt", "a") as f:
+                        f.write(product_id + '\n')
+                        print("This number has been trashed")
+                        raise ImportError
+                elif a != "":
                     num_to_waste = a.strip().split(" ")
                     num_to_waste = list(set([int(i) for i in num_to_waste]))
                 else:
@@ -131,6 +136,8 @@ def extract_amount_of_reviews_for_save(df, num):
                 flag_good_input = True
             except KeyboardInterrupt:
                 print("KeyboardInterrupted")
+                exit(0)
+            except ImportError:
                 exit(0)
             except:
                 print("-----------------------------------------------------")
@@ -152,8 +159,8 @@ def make_summary_in_single_review(location, big_cat, small_cat, product_id):
     df_good = df[df['review_user_grade'].apply(lambda grade: seperate_review(grade, True))].reset_index()
     df_bad = df[df['review_user_grade'].apply(lambda grade: seperate_review(grade, False))].reset_index()
     
-    a += extract_amount_of_reviews_for_save(df_good, GOOD_NUM)
-    a += extract_amount_of_reviews_for_save(df_bad, BAD_NUM)
+    a += extract_amount_of_reviews_for_save(df_good, GOOD_NUM, product_id)
+    a += extract_amount_of_reviews_for_save(df_bad, BAD_NUM, product_id)
 
     reviews = []
 
@@ -203,8 +210,19 @@ def main():
 
     exist = pd.read_csv(now_loc + "/naver_summary.csv")
     exist = exist['product_id'].tolist()
+
+    try:
+        with open(now_loc + "trash.txt") as f:
+            trashed = f.readlines()
+        trashed = [line.rstrip('\n') for line in trashed]
+    except FileNotFoundError:
+        trashed = []
+    
     if product_name in exist:
         print("exist")
+        return
+    elif product_name in trashed:
+        print("trashed")
         return
     else:
         make_summary_in_single_review(fileloc, big_cat, small_cat, product_name)
