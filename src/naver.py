@@ -134,7 +134,6 @@ def make_summary_in_single_review(location, big_cat, small_cat, product_id):
 
     df= df.sort_values('review_help_cnt', ascending=False)
 
-
     a = []
     df = df[df['review_topics'].apply(lambda text: include_all_tag(text))]
     df_good = df[df['review_user_grade'].apply(lambda grade: seperate_review(grade, True))].reset_index()
@@ -144,6 +143,7 @@ def make_summary_in_single_review(location, big_cat, small_cat, product_id):
     a += extract_amount_of_reviews_for_save(df_bad, BAD_NUM)
 
     reviews = []
+    print("Selected Product: {}".format(df.loc[0]['product_name']))
     print("______당신이 선택한 리뷰 10개입니다______")
     for idx, i in enumerate(a):
         print(idx, ",", i['review_text'])
