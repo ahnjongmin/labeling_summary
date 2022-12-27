@@ -104,6 +104,7 @@ def extract_amount_of_reviews_for_save(df, num):
     reviews_dict_list = []
     order = 0
     left_num = num
+    print("Selected Product: {}".format(df.loc[0]['product_name']))
     while left_num != 0:
         df_sample = df.loc[order: order+left_num-1]
         df_sample = df_sample.apply(extract_taste_area_in_review, axis=1)
@@ -151,7 +152,6 @@ def make_summary_in_single_review(location, big_cat, small_cat, product_id):
     print("")
     dict_to_save = {"big_cat": big_cat, "small_cat": small_cat, "product_id": product_id, "product_name": a[0]['product_name'], "review_text": reviews, "review_summary": summary}
 
-    
     file_exist = os.path.exists(now_loc + "naver_summary.csv")
     fieldnames = ["big_cat", "small_cat", "product_id", "product_name", "review_text", "review_summary"]
 
@@ -173,7 +173,7 @@ def make_summary_in_single_review(location, big_cat, small_cat, product_id):
 def main():
     filenames = os.listdir(data_loc)
     #cat_choice = random.choice(filenames)
-    cat_choice = "mealkit"
+    cat_choice = "bakery"
     fileloc = data_loc + cat_choice + "/"
     big_cat = cat_choice
 
