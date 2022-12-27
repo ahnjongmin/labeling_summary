@@ -4,6 +4,7 @@ import re
 from csv import DictWriter
 import random
 from kiwipiepy import Kiwi
+import time
 
 kiwi = Kiwi()
 data_loc = os.getcwd() + "/../naver/"
@@ -108,22 +109,34 @@ def extract_amount_of_reviews_for_save(df, num):
     while left_num != 0:
         df_sample = df.loc[order: order+left_num-1]
         df_sample = df_sample.apply(extract_taste_area_in_review, axis=1)
-        print("________Select to waste in this reviews________, left: {}".format(left_num))
-        for idx, row in df_sample.iterrows():
-            print(idx, row.review_text)
-        
-        a = input()
-        if a != "":
-            num_to_waste = a.strip().split(" ")
-            num_to_waste = [int(i) for i in num_to_waste]
-        else:
-            num_to_waste = []
-        
-        dropped_df_sample = df_sample.drop(num_to_waste)
-        for _, row in dropped_df_sample.iterrows():
-            reviews_dict_list.append({'product_id': df.loc[0]['product_id'], "product_name": df.loc[0]['product_name'], "review_help_cnt":row.review_help_cnt, "review_text":row.review_text})
-        order += left_num
-        left_num -= left_num - len(num_to_waste)
+        flag_good_input = False
+        while flag_good_input == False:
+            try:
+                print("________Select to waste in this reviews________, left: {}".format(left_num))
+                for idx, row in df_sample.iterrows():
+                    print(idx, row.review_text)
+                
+                a = input()
+                if a != "":
+                    num_to_waste = a.strip().split(" ")
+                    num_to_waste = [int(i) for i in num_to_waste]
+                else:
+                    num_to_waste = []
+                
+                dropped_df_sample = df_sample.drop(num_to_waste)
+                for _, row in dropped_df_sample.iterrows():
+                    reviews_dict_list.append({'product_id': df.loc[0]['product_id'], "product_name": df.loc[0]['product_name'], "review_help_cnt":row.review_help_cnt, "review_text":row.review_text})
+                order += left_num
+                left_num -= left_num - len(num_to_waste)
+                flag_good_input = True
+            except KeyboardInterrupt:
+                print("KeyboardInterrupted")
+                exit(0)
+            except:
+                print("-----------------------------------------------------")
+                print("I think you put wrong num. Check format one more time")
+                print("-----------------------------------------------------")
+                time.sleep(0.3)
 
     return reviews_dict_list
 
@@ -143,7 +156,7 @@ def make_summary_in_single_review(location, big_cat, small_cat, product_id):
     a += extract_amount_of_reviews_for_save(df_bad, BAD_NUM)
 
     reviews = []
-    
+
     print("______당신이 선택한 리뷰 10개입니다______")
     for idx, i in enumerate(a):
         print(idx, ",", i['review_text'])
