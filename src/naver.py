@@ -12,11 +12,12 @@ now_loc = os.getcwd() + "/../"
 BAD_NUM = 2
 GOOD_NUM = 8
 MIN_LEN = 10
+ASPECT = "포장"
 
 def include_all_tag(text):
 
     try:
-        if "(맛)" in text:
+        if "({})".format(ASPECT) in text:
             return True
         else:
             return False
@@ -47,28 +48,7 @@ def seperate_review(grade, is_good):
             else:
                 return True
         except TypeError:
-            return False        
-
-# def extract_taste_area_in_review(text, area_text):
-#     split_text = kiwi.split_into_sents(text)
-#     split_text = [i.text for i in split_text]
-    
-#     split_area_text = area_text.split("\n")
-#     split_area_text = [i for i in split_area_text if "(맛)" in i]
-#     split_area_text = [i.replace("(맛)", "") for i in split_area_text]
-#     print(split_text)
-#     print(split_area_text)
-#     aalist = []
-#     ret_str = ""
-#     for idx, i in enumerate(split_text):
-#         for j in split_area_text:
-#             if j in i:
-#                 aalist.append(idx)
-#     aalist = set(aalist)
-#     for i in aalist:
-#         ret_str += split_text[i]
-    
-#     return ret_str
+            return False
 
 
 def extract_taste_area_in_review(row):
@@ -79,12 +59,12 @@ def extract_taste_area_in_review(row):
     split_text = [i.text for i in split_text]
     
     split_area_text = area_text.split("\n")
-    split_area_text = [i for i in split_area_text if "(맛)" in i]
-    split_area_text = [i.replace("(맛)", "") for i in split_area_text]
+    split_area_text = [i for i in split_area_text if "({})".format(ASPECT) in i]
+    split_area_text = [i.replace("({})".format(ASPECT), "") for i in split_area_text]
     split_area_text = [i for i in split_area_text if i != ""]
 
-    #print(split_text)
-    #print(split_area_text)
+    print(split_text)
+    print(split_area_text)
 
     aalist = []
     ret_str = ""
@@ -122,6 +102,8 @@ def extract_amount_of_reviews_for_save(df, num, product_id):
                         f.write(product_id + '\n')
                         print("This number has been trashed")
                         raise ImportError
+                elif "다" in a:
+                    num_to_waste = df_sample.index.tolist()
                 elif a != "":
                     num_to_waste = a.strip().split(" ")
                     num_to_waste = list(set([int(i) for i in num_to_waste]))
@@ -155,7 +137,14 @@ def make_summary_in_single_review(location, big_cat, small_cat, product_id):
     df= df.sort_values('review_help_cnt', ascending=False)
 
     a = []
+
+    print(df['review_topics'])
+    print("____________________")
     df = df[df['review_topics'].apply(lambda text: include_all_tag(text))]
+    print(df['review_topics'])
+    if len(df) == 0:
+        print("no pozang @@@@@@@@@@")
+        return
     df_good = df[df['review_user_grade'].apply(lambda grade: seperate_review(grade, True))].reset_index()
     df_bad = df[df['review_user_grade'].apply(lambda grade: seperate_review(grade, False))].reset_index()
     
@@ -199,7 +188,7 @@ def main():
 
     smallcatnames = os.listdir(fileloc)
     #cat_choice = random.choice(smallcatnames)
-    cat_choice = "total"
+    cat_choice = "total_jongmin"
     fileloc += cat_choice + '/'
     small_cat = cat_choice
 
@@ -231,8 +220,3 @@ def main():
 if __name__ == "__main__":
     while 1:
         main()
-#     extract_taste_area_in_review("두개 먹어봤는데요 진짜 맛있어요",  """(맛)두개 먹어봤는데요
-# (만족도)맛은 그저 그냥 그래요
-# (만족도)가격대비 좋은지 모르겠구요
-# (가격)가격대비 좋은지 모르겠구요
-# """)
