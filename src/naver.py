@@ -12,15 +12,18 @@ now_loc = os.getcwd() + "/../"
 BAD_NUM = 2
 GOOD_NUM = 8
 MIN_LEN = 10
-ASPECT = ["포장", "제품구성"]
+PRICE = ["가격", "음식량", "용량", "사이즈"]
+PACKAGE = ["포장", "제품구성"]
+FLAVOR = ["맛", "식감", "향기"]
+ASPECT = PACKAGE
 
-def include_all_tag(text):
+def include_more_than_one(text):
 
     try:
-        if "({})".format(ASPECT) in text:
-            return True
-        else:
-            return False
+        for aspect in ASPECT:
+            if "({})".format(aspect) in text:
+                return True
+        return False
     except TypeError:
         return False
 
@@ -51,20 +54,30 @@ def seperate_review(grade, is_good):
             return False
 
 
+def is_aspect_there(text):
+    for i in ASPECT:
+        if "({})".format(i) in text:
+            return True
+    return False
+
+def replace_aspects_to_blank(text):
+    for aspect in ASPECT:
+        text = text.replace("({})".format(aspect), "")
+    return text
+
 def extract_taste_area_in_review(row):
-    text = row['cleanContent']
-    area_text = row['topicSpans']
+    text = row['cleanContent']  # 실제 문장
+    area_text = row['topicSpans'] # 특정 문장이 있는 곳 ex: (맛) 두부 맛있는 두부 (사이즈)뭐시기
     text = text.replace("\n", " ")
     split_text = kiwi.split_into_sents(text)
     split_text = [i.text for i in split_text]
     
     split_area_text = area_text.split("\n")
-    split_area_text = [i for i in split_area_text if "({})".format(ASPECT) in i]
-    split_area_text = [i.replace("({})".format(ASPECT), "") for i in split_area_text]
+    split_area_text = [i for i in split_area_text if is_aspect_there(i)==True]
+    split_area_text = [replace_aspects_to_blank(i) for i in split_area_text]
     split_area_text = [i for i in split_area_text if i != ""]
-
-    print(split_text)
-    print(split_area_text)
+    #print(split_text)
+    #print(split_area_text)
 
     aalist = []
     ret_str = ""
@@ -85,7 +98,8 @@ def extract_amount_of_reviews_for_save(df, num, matchNvMid):
     reviews_dict_list = []
     order = 0
     left_num = num
-    print("Selected Product: {}".format(matchNvMid, "||", df.loc[0]['nvMid']))
+    #print("Selected Product: {}".format(matchNvMid, "||", df.loc[0]['nvMid']))
+    print("Selected Product: {}".format(matchNvMid))
     while left_num != 0:
         df_sample = df.loc[order: order+left_num-1]
         df_sample = df_sample.apply(extract_taste_area_in_review, axis=1)
@@ -136,20 +150,27 @@ def make_summary_in_single_review(location, big_cat, small_cat, matchNvMid):
 
     df= df.sort_values('qualityScore', ascending=False)
 
+    df = df.drop_duplicates("cleanContent")
+
     a = []
 
-    print(df['topicSpans'])
+    #print(df['topicSpans'])
     print("____________________")
-    df = df[df['topicSpans'].apply(lambda text: include_all_tag(text))]
-    print(df['topicSpans'])
+    df = df[df['topicSpans'].apply(lambda text: include_more_than_one(text))]
+    #print(df['topicSpans'])
     if len(df) == 0:
         print("no pozang @@@@@@@@@@")
         return
     df_good = df[df['starScore'].apply(lambda grade: seperate_review(grade, True))].reset_index()
     df_bad = df[df['starScore'].apply(lambda grade: seperate_review(grade, False))].reset_index()
+    df = df.reset_index()
+    #a += extract_amount_of_reviews_for_save(df_good, GOOD_NUM, matchNvMid)
+    #a += extract_amount_of_reviews_for_save(df_bad, BAD_NUM, matchNvMid)
+    if len(df) < 10:
+        print("not enough: {}".format(len(df)))
+        return
+    a += extract_amount_of_reviews_for_save(df, 10, matchNvMid)
     
-    a += extract_amount_of_reviews_for_save(df_good, GOOD_NUM, matchNvMid)
-    a += extract_amount_of_reviews_for_save(df_bad, BAD_NUM, matchNvMid)
 
     reviews = []
 
