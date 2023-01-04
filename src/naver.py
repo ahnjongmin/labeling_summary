@@ -12,7 +12,7 @@ now_loc = os.getcwd() + "/../"
 BAD_NUM = 2
 GOOD_NUM = 8
 MIN_LEN = 10
-ASPECT = "포장"
+ASPECT = ["포장", "제품구성"]
 
 def include_all_tag(text):
 
@@ -52,8 +52,8 @@ def seperate_review(grade, is_good):
 
 
 def extract_taste_area_in_review(row):
-    text = row['review_text']
-    area_text = row['review_topics']
+    text = row['cleanContent']
+    area_text = row['topicSpans']
     text = text.replace("\n", " ")
     split_text = kiwi.split_into_sents(text)
     split_text = [i.text for i in split_text]
@@ -76,16 +76,16 @@ def extract_taste_area_in_review(row):
     for i in aalist:
         ret_str += split_text[i]
         ret_str += " "
-    row['review_text'] = ret_str
+    row['cleanContent'] = ret_str
 
     return row
 
-def extract_amount_of_reviews_for_save(df, num, product_id):
+def extract_amount_of_reviews_for_save(df, num, matchNvMid):
     
     reviews_dict_list = []
     order = 0
     left_num = num
-    print("Selected Product: {}".format(df.loc[0]['product_name']))
+    print("Selected Product: {}".format(matchNvMid, "||", df.loc[0]['nvMid']))
     while left_num != 0:
         df_sample = df.loc[order: order+left_num-1]
         df_sample = df_sample.apply(extract_taste_area_in_review, axis=1)
@@ -94,12 +94,12 @@ def extract_amount_of_reviews_for_save(df, num, product_id):
             try:
                 print("________Select to waste in this reviews________, left: {}".format(left_num))
                 for idx, row in df_sample.iterrows():
-                    print(idx, row.review_text)
+                    print(idx, row.cleanContent)
                 
                 a = input()
                 if a == "!!!":
                     with open(now_loc + "/trash.txt", "a") as f:
-                        f.write(product_id + '\n')
+                        f.write(matchNvMid + '\n')
                         print("This number has been trashed")
                         raise ImportError
                 elif "다" in a:
@@ -112,7 +112,7 @@ def extract_amount_of_reviews_for_save(df, num, product_id):
                 
                 dropped_df_sample = df_sample.drop(num_to_waste)
                 for _, row in dropped_df_sample.iterrows():
-                    reviews_dict_list.append({'product_id': df.loc[0]['product_id'], "product_name": df.loc[0]['product_name'], "review_help_cnt":row.review_help_cnt, "review_text":row.review_text})
+                    reviews_dict_list.append({'matchNvMid': df.loc[0]['matchNvMid'], "nvMid": df.loc[0]['nvMid'], "qualityScore":row.qualityScore, "cleanContent":row.cleanContent})
                 order += left_num
                 left_num -= left_num - len(num_to_waste)
                 flag_good_input = True
@@ -130,46 +130,46 @@ def extract_amount_of_reviews_for_save(df, num, product_id):
     return reviews_dict_list
 
 
-def make_summary_in_single_review(location, big_cat, small_cat, product_id):
-    print("This is in {}/{}/{}".format(big_cat, small_cat, product_id))
+def make_summary_in_single_review(location, big_cat, small_cat, matchNvMid):
+    print("This is in {}/{}/{}".format(big_cat, small_cat, matchNvMid))
     df = pd.read_csv(location)
 
-    df= df.sort_values('review_help_cnt', ascending=False)
+    df= df.sort_values('qualityScore', ascending=False)
 
     a = []
 
-    print(df['review_topics'])
+    print(df['topicSpans'])
     print("____________________")
-    df = df[df['review_topics'].apply(lambda text: include_all_tag(text))]
-    print(df['review_topics'])
+    df = df[df['topicSpans'].apply(lambda text: include_all_tag(text))]
+    print(df['topicSpans'])
     if len(df) == 0:
         print("no pozang @@@@@@@@@@")
         return
-    df_good = df[df['review_user_grade'].apply(lambda grade: seperate_review(grade, True))].reset_index()
-    df_bad = df[df['review_user_grade'].apply(lambda grade: seperate_review(grade, False))].reset_index()
+    df_good = df[df['starScore'].apply(lambda grade: seperate_review(grade, True))].reset_index()
+    df_bad = df[df['starScore'].apply(lambda grade: seperate_review(grade, False))].reset_index()
     
-    a += extract_amount_of_reviews_for_save(df_good, GOOD_NUM, product_id)
-    a += extract_amount_of_reviews_for_save(df_bad, BAD_NUM, product_id)
+    a += extract_amount_of_reviews_for_save(df_good, GOOD_NUM, matchNvMid)
+    a += extract_amount_of_reviews_for_save(df_bad, BAD_NUM, matchNvMid)
 
     reviews = []
 
     print("______당신이 선택한 리뷰 10개입니다______")
     for idx, i in enumerate(a):
-        print(idx, ",", i['review_text'])
-        reviews.append(i['review_text'])
+        print(idx, ",", i['cleanContent'])
+        reviews.append(i['cleanContent'])
     summary = input("요약해주세요: ")
     print("")
-    dict_to_save = {"big_cat": big_cat, "small_cat": small_cat, "product_id": product_id, "product_name": a[0]['product_name'], "review_text": reviews, "review_summary": summary}
+    dict_to_save = {"big_cat": big_cat, "small_cat": small_cat, "matchNvMid": matchNvMid, "nvMid": a[0]['nvMid'], "cleanContent": reviews, "review_summary": summary}
 
-    file_exist = os.path.exists(now_loc + "naver_summary.csv")
-    fieldnames = ["big_cat", "small_cat", "product_id", "product_name", "review_text", "review_summary"]
+    file_exist = os.path.exists(now_loc + "naver_new_summary.csv")
+    fieldnames = ["big_cat", "small_cat", "matchNvMid", "nvMid", "cleanContent", "review_summary"]
 
-    with open('{}naver_summary.csv'.format(now_loc), 'a', newline='', encoding="utf-8-sig") as f_object:
+    with open('{}naver_new_summary.csv'.format(now_loc), 'a', newline='', encoding="utf-8-sig") as f_object:
         dictwriter_object = DictWriter(f_object, fieldnames=fieldnames)
         if file_exist:
-            exist_reviews = pd.read_csv(now_loc + "naver_summary.csv")
-            exist_reviews_id = exist_reviews.product_id.tolist()
-            if dict_to_save['product_id'] in exist_reviews_id:
+            exist_reviews = pd.read_csv(now_loc + "naver_new_summary.csv")
+            exist_reviews_id = exist_reviews.matchNvMid.tolist()
+            if dict_to_save['matchNvMid'] in exist_reviews_id:
                 print("Warning: There is an existing review summary")
             else:
                 dictwriter_object.writerow(dict_to_save)            
@@ -182,23 +182,23 @@ def make_summary_in_single_review(location, big_cat, small_cat, product_id):
 def main():
     filenames = os.listdir(data_loc)
     #cat_choice = random.choice(filenames)
-    cat_choice = "bakery"
+    cat_choice = "gjsnew"
     fileloc = data_loc + cat_choice + "/"
     big_cat = cat_choice
 
     smallcatnames = os.listdir(fileloc)
     #cat_choice = random.choice(smallcatnames)
-    cat_choice = "total_jongmin"
+    cat_choice = "total"
     fileloc += cat_choice + '/'
     small_cat = cat_choice
 
     productnames = os.listdir(fileloc)
     cat_choice = random.choice(productnames)
     fileloc += cat_choice
-    product_name = cat_choice
+    matchNvMid = cat_choice
 
-    exist = pd.read_csv(now_loc + "/naver_summary.csv")
-    exist = exist['product_id'].tolist()
+    exist = pd.read_csv(now_loc + "naver_new_summary.csv")
+    exist = exist['matchNvMid'].tolist()
 
     try:
         with open(now_loc + "trash.txt") as f:
@@ -207,14 +207,14 @@ def main():
     except FileNotFoundError:
         trashed = []
     
-    if product_name in exist:
+    if matchNvMid in exist:
         print("exist")
         return
-    elif product_name in trashed:
+    elif matchNvMid in trashed:
         print("trashed")
         return
     else:
-        make_summary_in_single_review(fileloc, big_cat, small_cat, product_name)
+        make_summary_in_single_review(fileloc, big_cat, small_cat, matchNvMid)
 
 
 if __name__ == "__main__":
