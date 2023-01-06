@@ -11,14 +11,14 @@ now_loc = os.getcwd() + "/../"
 def main():
     list = []
     for i in range(10):
-        a = input()
+        a = input(str(i)+", ")
         list.append(a)
     return list
 
 def t():
     product_name = input("프로덕트 이름: ")
     list = main()
-    
+    print("_______________________")
     for idx, i in enumerate(list):
         print(idx, ",", i)
 

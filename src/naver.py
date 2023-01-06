@@ -15,7 +15,7 @@ MIN_LEN = 10
 PRICE = ["가격", "음식량", "용량", "사이즈"]
 PACKAGE = ["포장", "제품구성"]
 FLAVOR = ["맛", "식감", "향기"]
-ASPECT = FLAVOR
+ASPECT = PRICE
 
 def include_more_than_one(text):
 
@@ -116,7 +116,8 @@ def extract_amount_of_reviews_for_save(df, num, matchNvMid):
                 for idx, row in df_sample.iterrows():
                     print(idx, row.cleanContent)
                 
-                a = input()
+                #a = input()
+                a=""
                 if a == "!!!":
                     with open(now_loc + "/trash.txt", "a") as f:
                         f.write(matchNvMid + '\n')
@@ -150,18 +151,34 @@ def extract_amount_of_reviews_for_save(df, num, matchNvMid):
     return reviews_dict_list
 
 
-def make_summary_in_single_review(location, big_cat, small_cat, matchNvMid):
+def make_summary_in_single_review(location, big_cat, small_cat, matchNvMid):    
     print("This is in {}/{}/{}".format(big_cat, small_cat, matchNvMid))
     df = pd.read_csv(location)
 
-    flagg = False
+    # prepare product name and smry
+    product_name = df.loc[0].productName
     smry = df.loc[0].naverSmry
+    
+    # check is there aspect summary, if not break
+    flagg = False    
     for i in ASPECT:
         if i in smry:
             flagg = True
     if flagg == False:
         return
-    print(smry)
+
+
+    splitted_smry = ""
+    smry_split = smry.split("|")
+    for i in smry_split:
+        for aspect in ASPECT:
+            if "`{}`".format(aspect) in i:
+                splitted_smry = i.split("/")[-1]
+                break
+    if splitted_smry == "":
+        return
+    smry = splitted_smry.replace("`", "")
+
 
     df= df.sort_values('qualityScore', ascending=False)
 
@@ -195,12 +212,18 @@ def make_summary_in_single_review(location, big_cat, small_cat, matchNvMid):
     for idx, i in enumerate(a):
         print(idx, ",", i['cleanContent'])
         reviews.append(i['cleanContent'])
-    summary = input("요약해주세요: ")
+    
+    # I fixed it!!!!! If you need to write summary then activate first one, if you need to get it then activate second one.
+    #summary = input("요약해주세요: ")
+    summary = smry
+    print(summary)
+    #ttttttt = input("위에 출력된 요약본이 맞으면 그냥 엔터를 누르세요 아니면 컨씨")
+
     print("")
-    dict_to_save = {"big_cat": big_cat, "small_cat": small_cat, "matchNvMid": matchNvMid, "nvMid": a[0]['nvMid'], "cleanContent": reviews, "review_summary": summary}
+    dict_to_save = {"big_cat": big_cat, "small_cat": small_cat, "matchNvMid": matchNvMid, "product_name": product_name, "cleanContent": reviews, "review_summary": summary}
 
     file_exist = os.path.exists(now_loc + "naver_new_summary.csv")
-    fieldnames = ["big_cat", "small_cat", "matchNvMid", "nvMid", "cleanContent", "review_summary"]
+    fieldnames = ["big_cat", "small_cat", "matchNvMid", "product_name", "cleanContent", "review_summary"]
 
     with open('{}naver_new_summary.csv'.format(now_loc), 'a', newline='', encoding="utf-8-sig") as f_object:
         dictwriter_object = DictWriter(f_object, fieldnames=fieldnames)
@@ -220,7 +243,7 @@ def make_summary_in_single_review(location, big_cat, small_cat, matchNvMid):
 def main():
     filenames = os.listdir(data_loc)
     #cat_choice = random.choice(filenames)
-    cat_choice = "gjsnew"
+    cat_choice = "bakerynew"
     fileloc = data_loc + cat_choice + "/"
     big_cat = cat_choice
 
