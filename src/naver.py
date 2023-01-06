@@ -15,7 +15,7 @@ MIN_LEN = 10
 PRICE = ["가격", "음식량", "용량", "사이즈"]
 PACKAGE = ["포장", "제품구성"]
 FLAVOR = ["맛", "식감", "향기"]
-ASPECT = PACKAGE
+ASPECT = FLAVOR
 
 def include_more_than_one(text):
 
@@ -101,8 +101,14 @@ def extract_amount_of_reviews_for_save(df, num, matchNvMid):
     #print("Selected Product: {}".format(matchNvMid, "||", df.loc[0]['nvMid']))
     print("Selected Product: {}".format(matchNvMid))
     while left_num != 0:
-        df_sample = df.loc[order: order+left_num-1]
-        df_sample = df_sample.apply(extract_taste_area_in_review, axis=1)
+        # df_sample = df.loc[order: order+left_num-1]
+        # df_sample = df_sample.apply(extract_taste_area_in_review, axis=1)
+        df_sample = df.apply(extract_taste_area_in_review, axis=1)
+        #df_sample = df[len(df.cleanContent) >= 10]
+
+        df_sample = df_sample.loc[order: order+left_num-1]
+
+
         flag_good_input = False
         while flag_good_input == False:
             try:
@@ -148,9 +154,20 @@ def make_summary_in_single_review(location, big_cat, small_cat, matchNvMid):
     print("This is in {}/{}/{}".format(big_cat, small_cat, matchNvMid))
     df = pd.read_csv(location)
 
+    flagg = False
+    smry = df.loc[0].naverSmry
+    for i in ASPECT:
+        if i in smry:
+            flagg = True
+    if flagg == False:
+        return
+    print(smry)
+
     df= df.sort_values('qualityScore', ascending=False)
 
     df = df.drop_duplicates("cleanContent")
+
+    
 
     a = []
 
